@@ -1,10 +1,12 @@
 blueprint:
-  name: Hue Random White Strobe (True Parallel)
-  description: Each selected Hue light strobes independently with random timing.
+  name: Hue Random White Strobe (Parallel)
+  description: >
+    Each selected Hue light strobes independently with random timing.
   domain: script
   input:
     target_lights:
       name: Target Hue Lights
+      description: Select lights to strobe
       selector:
         entity:
           domain: light
