@@ -1,0 +1,59 @@
+blueprint:
+  name: Hue White Strobe
+  description: Make selected Hue lights strobe pure white.
+  domain: script
+  input:
+    target_light:
+      name: Target Hue Light(s)
+      description: Select the Hue light(s) to strobe.
+      selector:
+        target:
+          entity:
+            domain: light
+    flashes:
+      name: Number of Flashes
+      description: How many times the lights should flash.
+      default: 20
+      selector:
+        number:
+          min: 1
+          max: 100
+          step: 1
+          mode: slider
+    on_time:
+      name: Flash On Time (ms)
+      description: How long the light stays on per flash.
+      default: 150
+      selector:
+        number:
+          min: 50
+          max: 1000
+          step: 10
+          unit_of_measurement: ms
+    off_time:
+      name: Flash Off Time (ms)
+      description: How long the light stays off per flash.
+      default: 150
+      selector:
+        number:
+          min: 50
+          max: 1000
+          step: 10
+          unit_of_measurement: ms
+
+sequence:
+  - repeat:
+      count: !input flashes
+      sequence:
+        - service: light.turn_on
+          target: !input target_light
+          data:
+            brightness: 255
+            color_temp: 153   # ~6500K, pure white
+        - delay:
+            milliseconds: !input on_time
+        - service: light.turn_off
+          target: !input target_light
+        - delay:
+            milliseconds: !input off_time
+mode: single
