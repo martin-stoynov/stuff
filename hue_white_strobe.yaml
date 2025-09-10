@@ -1,8 +1,8 @@
 blueprint:
-  name: Hue Random White Strobe (Safe Random Delay)
+  name: Hue Random White Strobe (True Random Parallel)
   description: >
-    Make selected Hue lights strobe in pure white with randomized timing so
-    they do not flash in sync.
+    Each selected Hue light strobes pure white with independent random timing,
+    so they do not flash in sync.
   domain: script
   input:
     target_lights:
@@ -49,25 +49,23 @@ variables:
 
 sequence:
   - parallel:
+      # start one independent flashing loop per light
+      {% for light in !input target_lights %}
       - repeat:
-          for_each: !input target_lights
+          count: !input flashes
           sequence:
-            - variables:
-                light_entity: "{{ repeat.item }}"
-            - repeat:
-                count: !input flashes
-                sequence:
-                  - service: light.turn_on
-                    target:
-                      entity_id: "{{ light_entity }}"
-                    data:
-                      brightness: 255
-                      color_temp: 153
-                  - delay: >
-                      {{ ((min_d | int) + (range(0, (max_d | int - min_d | int) + 1) | random)) / 1000 }}
-                  - service: light.turn_off
-                    target:
-                      entity_id: "{{ light_entity }}"
-                  - delay: >
-                      {{ ((min_d | int) + (range(0, (max_d | int - min_d | int) + 1) | random)) / 1000 }}
+            - service: light.turn_on
+              target:
+                entity_id: "{{ light }}"
+              data:
+                brightness: 255
+                color_temp: 153
+            - delay: >
+                {{ ((min_d | int) + (range(0, (max_d | int - min_d | int) + 1) | random)) / 1000 }}
+            - service: light.turn_off
+              target:
+                entity_id: "{{ light }}"
+            - delay: >
+                {{ ((min_d | int) + (range(0, (max_d | int - min_d | int) + 1) | random)) / 1000 }}
+      {% endfor %}
 mode: restart
