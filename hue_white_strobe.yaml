@@ -1,47 +1,51 @@
 blueprint:
-  name: Hue Random White Strobe (True Random Parallel)
+  name: Hue Random White Strobe (True Parallel)
   description: >
     Each selected Hue light strobes pure white with independent random timing,
-    so they do not flash in sync.
+    fully unsynchronized.
   domain: script
   input:
-    target_lights:
-      name: Target Hue Lights
-      description: Select the Hue lights to strobe
+    light_1:
+      name: Light 1
       selector:
         entity:
           domain: light
-          multiple: true
+    light_2:
+      name: Light 2
+      selector:
+        entity:
+          domain: light
+          default: ""
+    light_3:
+      name: Light 3
+      selector:
+        entity:
+          domain: light
+          default: ""
     flashes:
       name: Number of Flashes
-      description: How many times each light should flash
       default: 20
       selector:
         number:
           min: 1
           max: 500
           step: 1
-          mode: slider
     min_delay:
       name: Minimum Delay (ms)
-      description: Minimum random delay between on/off (in milliseconds)
       default: 100
       selector:
         number:
           min: 10
           max: 2000
           step: 10
-          unit_of_measurement: ms
     max_delay:
       name: Maximum Delay (ms)
-      description: Maximum random delay between on/off (in milliseconds)
       default: 300
       selector:
         number:
           min: 20
           max: 5000
           step: 10
-          unit_of_measurement: ms
 
 variables:
   min_d: !input min_delay
@@ -49,24 +53,52 @@ variables:
 
 sequence:
   - parallel:
-      # Run one independent repeat loop per light
       - repeat:
-          for_each: !input target_lights
+          count: !input flashes
           sequence:
-            - repeat:
-                count: !input flashes
-                sequence:
-                  - service: light.turn_on
-                    target:
-                      entity_id: "{{ repeat.item }}"
-                    data:
-                      brightness: 255
-                      color_temp: 153
-                  - delay: >
-                      {{ ((min_d | int) + range(0, (max_d | int - min_d | int) + 1) | random) / 1000 }}
-                  - service: light.turn_off
-                    target:
-                      entity_id: "{{ repeat.item }}"
-                  - delay: >
-                      {{ ((min_d | int) + range(0, (max_d | int - min_d | int) + 1) | random) / 1000 }}
+            - service: light.turn_on
+              target:
+                entity_id: !input light_1
+              data:
+                brightness: 255
+                color_temp: 153
+            - delay: "{{ ((min_d | int) + range(0, (max_d | int - min_d | int) + 1) | random) / 1000 }}"
+            - service: light.turn_off
+              target:
+                entity_id: !input light_1
+            - delay: "{{ ((min_d | int) + range(0, (max_d | int - min_d | int) + 1) | random) / 1000 }}"
+      - choose:
+          - conditions: "{{ !input light_2 != '' }}"
+            sequence:
+              - repeat:
+                  count: !input flashes
+                  sequence:
+                    - service: light.turn_on
+                      target:
+                        entity_id: !input light_2
+                      data:
+                        brightness: 255
+                        color_temp: 153
+                    - delay: "{{ ((min_d | int) + range(0, (max_d | int - min_d | int) + 1) | random) / 1000 }}"
+                    - service: light.turn_off
+                      target:
+                        entity_id: !input light_2
+                    - delay: "{{ ((min_d | int) + range(0, (max_d | int - min_d | int) + 1) | random) / 1000 }}"
+      - choose:
+          - conditions: "{{ !input light_3 != '' }}"
+            sequence:
+              - repeat:
+                  count: !input flashes
+                  sequence:
+                    - service: light.turn_on
+                      target:
+                        entity_id: !input light_3
+                      data:
+                        brightness: 255
+                        color_temp: 153
+                    - delay: "{{ ((min_d | int) + range(0, (max_d | int - min_d | int) + 1) | random) / 1000 }}"
+                    - service: light.turn_off
+                      target:
+                        entity_id: !input light_3
+                    - delay: "{{ ((min_d | int) + range(0, (max_d | int - min_d | int) + 1) | random) / 1000 }}"
 mode: restart
