@@ -6,12 +6,14 @@ blueprint:
   input:
     target_lights:
       name: Target Hue Lights
+      description: Select the lights to strobe
       selector:
         entity:
           domain: light
           multiple: true
     flashes:
       name: Number of Flashes
+      description: How many times each light should flash
       default: 20
       selector:
         number:
@@ -49,13 +51,13 @@ sequence:
                 sequence:
                   - service: light.turn_on
                     target:
-                      entity_id: "{{ repeat.item.entity_id }}"
+                      entity_id: "{{ repeat.item }}"
                     data:
                       brightness: 255
                       color_temp: 153
-                  - delay: "{{ ((min_d | int) + range(0, (max_d | int - min_d | int) + 1) | random) / 1000 }}"
+                  - delay: "{{ ((min_d | int) + range(0, (max_d | int - min_d | int + 1) | random)) / 1000 }}"
                   - service: light.turn_off
                     target:
-                      entity_id: "{{ repeat.item.entity_id }}"
-                  - delay: "{{ ((min_d | int) + range(0, (max_d | int - min_d | int) + 1) | random) / 1000 }}"
+                      entity_id: "{{ repeat.item }}"
+                  - delay: "{{ ((min_d | int) + range(0, (max_d | int - min_d | int + 1) | random)) / 1000 }}"
 mode: restart
