@@ -49,43 +49,24 @@ variables:
 
 sequence:
   - parallel:
-      # Create an independent loop for each light
-      - variables:
-          light_id: "{{ light }}"
-        repeat:
-          count: !input flashes
+      # Run one independent repeat loop per light
+      - repeat:
+          for_each: !input target_lights
           sequence:
-            - service: light.turn_on
-              target:
-                entity_id: "{{ light_id }}"
-              data:
-                brightness: 255
-                color_temp: 153
-            - delay: >
-                {{ ((min_d | int) + range(0, (max_d | int - min_d | int) + 1) | random) / 1000 }}
-            - service: light.turn_off
-              target:
-                entity_id: "{{ light_id }}"
-            - delay: >
-                {{ ((min_d | int) + range(0, (max_d | int - min_d | int) + 1) | random) / 1000 }}
-      {% for light in !input target_lights %}
-      - variables:
-          light_id: "{{ light }}"
-        repeat:
-          count: !input flashes
-          sequence:
-            - service: light.turn_on
-              target:
-                entity_id: "{{ light_id }}"
-              data:
-                brightness: 255
-                color_temp: 153
-            - delay: >
-                {{ ((min_d | int) + range(0, (max_d | int - min_d | int) + 1) | random) / 1000 }}
-            - service: light.turn_off
-              target:
-                entity_id: "{{ light_id }}"
-            - delay: >
-                {{ ((min_d | int) + range(0, (max_d | int - min_d | int) + 1) | random) / 1000 }}
-      {% endfor %}
+            - repeat:
+                count: !input flashes
+                sequence:
+                  - service: light.turn_on
+                    target:
+                      entity_id: "{{ repeat.item }}"
+                    data:
+                      brightness: 255
+                      color_temp: 153
+                  - delay: >
+                      {{ ((min_d | int) + range(0, (max_d | int - min_d | int) + 1) | random) / 1000 }}
+                  - service: light.turn_off
+                    target:
+                      entity_id: "{{ repeat.item }}"
+                  - delay: >
+                      {{ ((min_d | int) + range(0, (max_d | int - min_d | int) + 1) | random) / 1000 }}
 mode: restart
