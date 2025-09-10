@@ -1,6 +1,8 @@
 blueprint:
-  name: Hue Random White Strobe (Randomized, per-light)
-  description: Make selected Hue lights strobe pure white with randomized timing so they do not flash in sync.
+  name: Hue Random White Strobe (Safe Random Delay)
+  description: >
+    Make selected Hue lights strobe in pure white with randomized timing so
+    they do not flash in sync.
   domain: script
   input:
     target_lights:
@@ -50,7 +52,6 @@ sequence:
       - repeat:
           for_each: !input target_lights
           sequence:
-            # capture the current light into a local variable so nested repeats can reference it
             - variables:
                 light_entity: "{{ repeat.item }}"
             - repeat:
@@ -62,10 +63,11 @@ sequence:
                     data:
                       brightness: 255
                       color_temp: 153
-                  # random delay between min_d and max_d (converted to seconds)
-                  - delay: "{{ ((range(min_d | int, max_d | int) | random) / 1000) | round(3) }}"
+                  - delay: >
+                      {{ ((min_d | int) + (range(0, (max_d | int - min_d | int) + 1) | random)) / 1000 }}
                   - service: light.turn_off
                     target:
                       entity_id: "{{ light_entity }}"
-                  - delay: "{{ ((range(min_d | int, max_d | int) | random) / 1000) | round(3) }}"
+                  - delay: >
+                      {{ ((min_d | int) + (range(0, (max_d | int - min_d | int) + 1) | random)) / 1000 }}
 mode: restart
