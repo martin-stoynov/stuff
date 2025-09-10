@@ -1,8 +1,6 @@
 blueprint:
-  name: Hue Random White Strobe
-  description: >
-    Make selected Hue lights strobe in pure white, with random timing so
-    they do not flash in sync.
+  name: Hue Random White Strobe (Randomized, per-light)
+  description: Make selected Hue lights strobe pure white with randomized timing so they do not flash in sync.
   domain: script
   input:
     target_lights:
@@ -19,27 +17,27 @@ blueprint:
       selector:
         number:
           min: 1
-          max: 100
+          max: 500
           step: 1
           mode: slider
     min_delay:
       name: Minimum Delay (ms)
-      description: Minimum random delay between flashes
+      description: Minimum random delay between on/off (in milliseconds)
       default: 100
       selector:
         number:
-          min: 50
-          max: 1000
+          min: 10
+          max: 2000
           step: 10
           unit_of_measurement: ms
     max_delay:
       name: Maximum Delay (ms)
-      description: Maximum random delay between flashes
+      description: Maximum random delay between on/off (in milliseconds)
       default: 300
       selector:
         number:
-          min: 100
-          max: 2000
+          min: 20
+          max: 5000
           step: 10
           unit_of_measurement: ms
 
@@ -48,24 +46,26 @@ variables:
   max_d: !input max_delay
 
 sequence:
-  - repeat:
-      count: !input flashes
-      sequence:
-        - parallel:
+  - parallel:
+      - repeat:
+          for_each: !input target_lights
+          sequence:
+            # capture the current light into a local variable so nested repeats can reference it
+            - variables:
+                light_entity: "{{ repeat.item }}"
             - repeat:
-                for_each: !input target_lights
+                count: !input flashes
                 sequence:
                   - service: light.turn_on
                     target:
-                      entity_id: "{{ repeat.item }}"
+                      entity_id: "{{ light_entity }}"
                     data:
                       brightness: 255
                       color_temp: 153
-                  - delay:
-                      milliseconds: "{{ range(min_d | int, max_d | int) | random }}"
+                  # random delay between min_d and max_d (converted to seconds)
+                  - delay: "{{ ((range(min_d | int, max_d | int) | random) / 1000) | round(3) }}"
                   - service: light.turn_off
                     target:
-                      entity_id: "{{ repeat.item }}"
-                  - delay:
-                      milliseconds: "{{ range(min_d | int, max_d | int) | random }}"
+                      entity_id: "{{ light_entity }}"
+                  - delay: "{{ ((range(min_d | int, max_d | int) | random) / 1000) | round(3) }}"
 mode: restart
