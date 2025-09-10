@@ -43,6 +43,10 @@ blueprint:
           step: 10
           unit_of_measurement: ms
 
+variables:
+  min_d: !input min_delay
+  max_d: !input max_delay
+
 sequence:
   - repeat:
       count: !input flashes
@@ -58,10 +62,10 @@ sequence:
                       brightness: 255
                       color_temp: 153
                   - delay:
-                      milliseconds: "{{ range((!input min_delay) | int, (!input max_delay) | int) | random }}"
+                      milliseconds: "{{ range(min_d | int, max_d | int) | random }}"
                   - service: light.turn_off
                     target:
                       entity_id: "{{ repeat.item }}"
                   - delay:
-                      milliseconds: "{{ range((!input min_delay) | int, (!input max_delay) | int) | random }}"
+                      milliseconds: "{{ range(min_d | int, max_d | int) | random }}"
 mode: restart
