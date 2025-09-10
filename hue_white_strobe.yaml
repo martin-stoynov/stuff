@@ -9,9 +9,9 @@ blueprint:
       name: Target Hue Lights
       description: Select the Hue lights to strobe
       selector:
-        target:
-          entity:
-            domain: light
+        entity:
+          domain: light
+          multiple: true
     flashes:
       name: Number of Flashes
       description: How many times each light should flash
@@ -58,10 +58,10 @@ sequence:
                       brightness: 255
                       color_temp: 153
                   - delay:
-                      milliseconds: "{{ range(min_delay | int, max_delay | int) | random }}"
+                      milliseconds: "{{ range((!input min_delay) | int, (!input max_delay) | int) | random }}"
                   - service: light.turn_off
                     target:
                       entity_id: "{{ repeat.item }}"
                   - delay:
-                      milliseconds: "{{ range(min_delay | int, max_delay | int) | random }}"
+                      milliseconds: "{{ range((!input min_delay) | int, (!input max_delay) | int) | random }}"
 mode: restart
