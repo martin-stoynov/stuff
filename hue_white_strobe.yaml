@@ -1,43 +1,67 @@
-alias: Hue Random White Strobe
+blueprint:
+  name: Hue Random White Strobe
+  description: >
+    Make selected Hue lights strobe in pure white, with random timing so
+    they do not flash in sync.
+  domain: script
+  input:
+    target_lights:
+      name: Target Hue Lights
+      description: Select the Hue lights to strobe
+      selector:
+        target:
+          entity:
+            domain: light
+    flashes:
+      name: Number of Flashes
+      description: How many times each light should flash
+      default: 20
+      selector:
+        number:
+          min: 1
+          max: 100
+          step: 1
+          mode: slider
+    min_delay:
+      name: Minimum Delay (ms)
+      description: Minimum random delay between flashes
+      default: 100
+      selector:
+        number:
+          min: 50
+          max: 1000
+          step: 10
+          unit_of_measurement: ms
+    max_delay:
+      name: Maximum Delay (ms)
+      description: Maximum random delay between flashes
+      default: 300
+      selector:
+        number:
+          min: 100
+          max: 2000
+          step: 10
+          unit_of_measurement: ms
+
 sequence:
   - repeat:
-      count: 20   # Number of strobe cycles
+      count: !input flashes
       sequence:
         - parallel:
-            # Light 1
-            - sequence:
-                - service: light.turn_on
-                  target:
-                    entity_id: light.living_room_lamp  # Replace with your light
-                  data:
-                    brightness: 255
-                    color_temp: 153
-                - delay:
-                    milliseconds: "{{ range(100,300) | random }}"  # Random ON time
-                - service: light.turn_off
-                  target:
-                    entity_id: light.living_room_lamp
-                - delay:
-                    milliseconds: "{{ range(100,300) | random }}"  # Random OFF time
-
-            # Light 2
-            - sequence:
-                - delay:
-                    milliseconds: "{{ range(50,200) | random }}"  # Stagger start
-                - service: light.turn_on
-                  target:
-                    entity_id: light.kitchen_lamp  # Replace with your light
-                  data:
-                    brightness: 255
-                    color_temp: 153
-                - delay:
-                    milliseconds: "{{ range(100,300) | random }}"
-                - service: light.turn_off
-                  target:
-                    entity_id: light.kitchen_lamp
-                - delay:
-                    milliseconds: "{{ range(100,300) | random }}"
-
-            # Add more lights as needed, each with different stagger delays
+            - repeat:
+                for_each: !input target_lights
+                sequence:
+                  - service: light.turn_on
+                    target:
+                      entity_id: "{{ repeat.item }}"
+                    data:
+                      brightness: 255
+                      color_temp: 153
+                  - delay:
+                      milliseconds: "{{ range(min_delay | int, max_delay | int) | random }}"
+                  - service: light.turn_off
+                    target:
+                      entity_id: "{{ repeat.item }}"
+                  - delay:
+                      milliseconds: "{{ range(min_delay | int, max_delay | int) | random }}"
 mode: restart
-icon: mdi:lightbulb-fluorescent-tube
